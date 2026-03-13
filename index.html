@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDR Report Generator | AI-Powered Diagnostic Reports</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface-2: #1a1a28;
+            --surface-3: #222236;
+            --border: #2a2a40;
+            --text: #e8e8f0;
+            --text-dim: #8888a0;
+            --accent: #f97316;
+            --accent-glow: rgba(249, 115, 22, 0.15);
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #eab308;
+            --info: #3b82f6;
+            --critical: #dc2626;
+            --high: #f97316;
+            --moderate: #eab308;
+            --low: #22c55e;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* ── NAV ── */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), #fb923c);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+        }
+        .nav-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .nav-tag {
+            font-size: 0.7rem;
+            background: var(--accent-glow);
+            color: var(--accent);
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            text-align: center;
+            padding: 3rem 0 2rem;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--text), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.8rem;
+        }
+        .hero p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ── STEPS ── */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0 3rem;
+            flex-wrap: wrap;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--surface-2);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        .step.active .step-num {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        .step.done .step-num {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        .step-label { font-size: 0.9rem; color: var(--text-dim); }
+        .step.active .step-label { color: var(--text); font-weight: 500; }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* ── FORM ── */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.3px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-input::placeholder {
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        /* ── FILE UPLOAD ── */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+        .upload-zone.has-file {
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.05);
+        }
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .upload-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .upload-text {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+        }
+        .upload-text strong {
+            color: var(--accent);
+        }
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        /* ── GRID ── */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        /* ── BUTTON ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #fb923c);
+            color: white;
+            width: 100%;
+            padding: 16px;
+            font-size: 1.05rem;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 30px rgba(249, 115, 22, 0.3);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-download {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 20px;
+            font-size: 0.9rem;
+        }
+        .btn-download:hover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        /* ── LOADING ── */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.92);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .loading-overlay.active { display: flex; }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--surface-3);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-steps {
+            text-align: center;
+        }
+        .loading-step {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            padding: 4px 0;
+            transition: all 0.5s;
+        }
+        .loading-step.active {
+            color: var(--accent);
+            font-weight: 500;
+        }
+        .loading-step.done {
+            color: var(--success);
+        }
+        .loading-step.done::before {
+            content: '✓ ';
+        }
+
+        /* ── RESULTS ── */
+        #results { display: none; }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .download-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .badge-critical { background: rgba(220, 38, 38, 0.15); color: var(--critical); }
+        .badge-high { background: rgba(249, 115, 22, 0.15); color: var(--high); }
+        .badge-moderate { background: rgba(234, 179, 8, 0.15); color: var(--moderate); }
+        .badge-low { background: rgba(34, 197, 94, 0.15); color: var(--low); }
+
+        .observation-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .observation-card h4 {
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 0.8rem;
+        }
+        .obs-section {
+            padding: 0.8rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.8rem;
+        }
+        .obs-negative {
+            background: rgba(239, 68, 68, 0.05);
+            border-left: 3px solid var(--danger);
+        }
+        .obs-positive {
+            background: rgba(34, 197, 94, 0.05);
+            border-left: 3px solid var(--success);
+        }
+        .obs-thermal {
+            background: rgba(59, 130, 246, 0.05);
+            border-left: 3px solid var(--info);
+        }
+        .obs-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+        .obs-negative .obs-label { color: var(--danger); }
+        .obs-positive .obs-label { color: var(--success); }
+        .obs-thermal .obs-label { color: var(--info); }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .meta-item {
+            background: var(--surface-2);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        .meta-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+        .meta-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .action-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--surface-2);
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.8rem;
+            border: 1px solid var(--border);
+        }
+        .action-priority {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary-table th {
+            background: var(--surface-3);
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+        }
+        .summary-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        /* Image gallery */
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        .gallery-img {
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            aspect-ratio: 4/3;
+        }
+        .gallery-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .gallery-img:hover img {
+            transform: scale(1.05);
+        }
+        .gallery-img .img-label {
+            padding: 4px 8px;
+            background: var(--surface);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        /* Error */
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 1rem 1.5rem;
+            color: var(--danger);
+            display: none;
+            margin-bottom: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 1.5rem;
+            background: var(--surface);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 6px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+            font-weight: 500;
+        }
+        .tab-btn:hover:not(.active) {
+            background: var(--surface-2);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="nav-brand">
+        <div class="nav-logo">D</div>
+        <div>
+            <div class="nav-title">DDR Generator</div>
+        </div>
+    </div>
+    <span class="nav-tag">Gemini AI Powered</span>
+</nav>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-steps">
+        <div class="loading-step" id="ls1">Uploading documents...</div>
+        <div class="loading-step" id="ls2">Extracting text & images from PDFs...</div>
+        <div class="loading-step" id="ls3">Analyzing with Google Gemini AI...</div>
+        <div class="loading-step" id="ls4">Generating DOCX report...</div>
+        <div class="loading-step" id="ls5">Generating PDF report...</div>
+        <div class="loading-step" id="ls6">Finalizing DDR...</div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- HERO -->
+    <div class="hero">
+        <h1>DDR Report Generator</h1>
+        <p>Upload inspection & thermal reports. AI generates a professional Detailed Diagnostic Report with images, thermal analysis, and actionable recommendations.</p>
+    </div>
+
+    <!-- STEPS -->
+    <div class="steps">
+        <div class="step active" id="step1"><div class="step-num">1</div><span class="step-label">Upload Files</span></div>
+        <div class="step" id="step2"><div class="step-num">2</div><span class="step-label">AI Analysis</span></div>
+        <div class="step" id="step3"><div class="step-num">3</div><span class="step-label">Review & Download</span></div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- UPLOAD FORM -->
+    <div id="uploadSection">
+        <!-- API Key -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon" style="background:var(--accent-glow);">🔑</div>
+                <div>
+                    <div class="card-title">API Configuration</div>
+                    <div class="card-subtitle">Enter your free Google Gemini API key</div>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Google Gemini API Key</label>
+                <input type="password" class="form-input" id="apiKey" placeholder="AIzaSy... (get free key at aistudio.google.com)">
+            </div>
+        </div>
+
+        <!-- File Uploads -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background:rgba(59,130,246,0.1);">📋</div>
+                    <div>
+                        <div class="card-title">Inspection Report</div>
+                        <div class="card-subtitle">PDF with site observations & photos</div>
+                    </div>
+                </div>
+                <div class="upload-zone" id="inspZone">
+                    <input type="file" accept=".pdf" id="inspFile" onchange="handleFile(this, 'inspZone')">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Drop PDF here or <strong>browse</strong></div>
+                    <div class="file-name" id="inspFileName"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background:rgba(239,68,68,0.1);">🌡️</div>
+                    <div>
+                        <div class="card-title">Thermal Report</div>
+                        <div class="card-subtitle">PDF with thermal images & readings</div>
+                    </div>
+                </div>
+                <div class="upload-zone" id="thermZone">
+                    <input type="file" accept=".pdf" id="thermFile" onchange="handleFile(this, 'thermZone')">
+                    <div class="upload-icon">🔥</div>
+                    <div class="upload-text">Drop PDF here or <strong>browse</strong></div>
+                    <div class="file-name" id="thermFileName"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button class="btn btn-primary" id="generateBtn" onclick="generateReport()">
+            ⚡ Generate DDR Report
+        </button>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results">
+        <div class="result-header">
+            <div>
+                <h2 style="font-size:1.5rem;">📊 DDR Report Generated</h2>
+                <p style="color:var(--text-dim);font-size:0.9rem;" id="resultMeta"></p>
+            </div>
+            <div class="download-group">
+                <a class="btn btn-download" id="dlDocx">📝 Download DOCX</a>
+                <a class="btn btn-download" id="dlPdf">📑 Download PDF</a>
+                <a class="btn btn-download" id="dlJson">📦 Download JSON</a>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('summary')">Summary</button>
+            <button class="tab-btn" onclick="switchTab('observations')">Observations</button>
+            <button class="tab-btn" onclick="switchTab('causes')">Root Causes</button>
+            <button class="tab-btn" onclick="switchTab('severity')">Severity</button>
+            <button class="tab-btn" onclick="switchTab('actions')">Actions</button>
+            <button class="tab-btn" onclick="switchTab('thermal')">Thermal</button>
+            <button class="tab-btn" onclick="switchTab('table')">Summary Table</button>
+            <button class="tab-btn" onclick="switchTab('images')">Images</button>
+            <button class="tab-btn" onclick="switchTab('notes')">Notes</button>
+        </div>
+
+        <!-- Tab: Summary -->
+        <div class="tab-content active" id="tab-summary">
+            <div class="card">
+                <div class="section-title">🏠 Property Information</div>
+                <div class="meta-grid" id="metaGrid"></div>
+            </div>
+            <div class="card">
+                <div class="section-title">📝 Issue Summary</div>
+                <div id="issueSummary" style="line-height:1.8;"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Observations -->
+        <div class="tab-content" id="tab-observations">
+            <div class="card">
+                <div class="section-title">🔍 Area-wise Observations</div>
+                <div id="observationsList"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Causes -->
+        <div class="tab-content" id="tab-causes">
+            <div class="card">
+                <div class="section-title">🔬 Probable Root Causes</div>
+                <div id="causesList"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Severity -->
+        <div class="tab-content" id="tab-severity">
+            <div class="card">
+                <div class="section-title">⚠️ Severity Assessment</div>
+                <div id="severityList"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Actions -->
+        <div class="tab-content" id="tab-actions">
+            <div class="card">
+                <div class="section-title">🛠️ Recommended Actions</div>
+                <div id="actionsList"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Thermal -->
+        <div class="tab-content" id="tab-thermal">
+            <div class="card">
+                <div class="section-title">🌡️ Thermal Analysis</div>
+                <div id="thermalList"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Summary Table -->
+        <div class="tab-content" id="tab-table">
+            <div class="card">
+                <div class="section-title">📊 Summary Table</div>
+                <div id="summaryTable" style="overflow-x:auto;"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Images -->
+        <div class="tab-content" id="tab-images">
+            <div class="card">
+                <div class="section-title">📸 Inspection Photographs</div>
+                <div class="image-gallery" id="inspGallery"></div>
+            </div>
+            <div class="card">
+                <div class="section-title">🔥 Thermal Images</div>
+                <div class="image-gallery" id="thermGallery"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Notes -->
+        <div class="tab-content" id="tab-notes">
+            <div class="card">
+                <div class="section-title">📌 Additional Notes</div>
+                <div id="notesList"></div>
+            </div>
+            <div class="card">
+                <div class="section-title">❓ Missing / Unclear Information</div>
+                <div id="missingList"></div>
+            </div>
+        </div>
+
+        <!-- New Report Button -->
+        <div style="text-align:center;margin:2rem 0;">
+            <button class="btn btn-primary" style="max-width:300px;" onclick="resetApp()">🔄 Generate New Report</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleFile(input, zoneId) {
+    const zone = document.getElementById(zoneId);
+    const nameEl = zone.querySelector('.file-name');
+    if (input.files.length > 0) {
+        zone.classList.add('has-file');
+        nameEl.textContent = '✓ ' + input.files[0].name;
+    } else {
+        zone.classList.remove('has-file');
+        nameEl.textContent = '';
+    }
+}
+
+// Drag and drop
+document.querySelectorAll('.upload-zone').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const input = zone.querySelector('input');
+        input.files = e.dataTransfer.files;
+        handleFile(input, zone.id);
+    });
+});
+
+function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 8000);
+}
+
+let loadingInterval;
+function showLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('active');
+    const steps = ['ls1','ls2','ls3','ls4','ls5','ls6'];
+    let idx = 0;
+    steps.forEach(s => { document.getElementById(s).className = 'loading-step'; });
+    document.getElementById(steps[0]).classList.add('active');
+    loadingInterval = setInterval(() => {
+        if (idx < steps.length) {
+            document.getElementById(steps[idx]).classList.remove('active');
+            document.getElementById(steps[idx]).classList.add('done');
+        }
+        idx++;
+        if (idx < steps.length) {
+            document.getElementById(steps[idx]).classList.add('active');
+        }
+    }, 3000);
+}
+
+function hideLoading() {
+    clearInterval(loadingInterval);
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+async function generateReport() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const inspFile = document.getElementById('inspFile').files[0];
+    const thermFile = document.getElementById('thermFile').files[0];
+
+    if (!apiKey) return showError('Please enter your Google Gemini API key.');
+    if (!inspFile) return showError('Please upload the Inspection Report PDF.');
+    if (!thermFile) return showError('Please upload the Thermal Report PDF.');
+
+    const formData = new FormData();
+    formData.append('api_key', apiKey);
+    formData.append('inspection_report', inspFile);
+    formData.append('thermal_report', thermFile);
+
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step1').classList.add('done');
+    document.getElementById('step2').classList.add('active');
+    document.getElementById('generateBtn').disabled = true;
+    showLoading();
+
+    try {
+        const resp = await fetch('/generate', { method: 'POST', body: formData });
+        const json = await resp.json();
+        hideLoading();
+
+        if (json.error) {
+            showError(json.error);
+            document.getElementById('generateBtn').disabled = false;
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step1').classList.remove('done');
+            document.getElementById('step1').classList.add('active');
+            return;
+        }
+
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step2').classList.add('done');
+        document.getElementById('step3').classList.add('active');
+        
+        renderResults(json.data);
+    } catch (e) {
+        hideLoading();
+        showError('Network error: ' + e.message);
+        document.getElementById('generateBtn').disabled = false;
+    }
+}
+
+function renderResults(data) {
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+
+    const sid = data.session_id;
+    document.getElementById('dlDocx').href = `/download/${sid}/docx`;
+    document.getElementById('dlPdf').href = `/download/${sid}/pdf`;
+    document.getElementById('dlJson').href = `/download/${sid}/json`;
+
+    const meta = data.metadata;
+    document.getElementById('resultMeta').textContent = 
+        `${meta.property_type || 'Property'} | Inspected: ${meta.inspection_date || 'N/A'} | By: ${meta.inspected_by || 'N/A'} | ${data.num_inspection_images} photos, ${data.num_thermal_images} thermal images`;
+
+    // Meta grid
+    const metaFields = [
+        {l: 'Property Type', v: meta.property_type},
+        {l: 'Address', v: meta.property_address},
+        {l: 'Floors', v: meta.floors},
+        {l: 'Property Age', v: meta.property_age},
+        {l: 'Inspection Date', v: meta.inspection_date},
+        {l: 'Inspected By', v: meta.inspected_by},
+        {l: 'Previous Audit', v: meta.previous_structural_audit},
+        {l: 'Previous Repair', v: meta.previous_repair_work},
+    ];
+    document.getElementById('metaGrid').innerHTML = metaFields.map(f =>
+        `<div class="meta-item"><div class="meta-label">${f.l}</div><div class="meta-value">${f.v || 'N/A'}</div></div>`
+    ).join('');
+
+    // Summary
+    document.getElementById('issueSummary').innerHTML = (data.summary || 'N/A').split('\n').map(p => `<p style="margin-bottom:0.8rem;">${p}</p>`).join('');
+
+    // Observations
+    document.getElementById('observationsList').innerHTML = (data.observations || []).map(obs => `
+        <div class="observation-card">
+            <h4>Area ${obs.area_id}: ${obs.area_name}</h4>
+            <div class="obs-section obs-negative">
+                <div class="obs-label">▼ Negative Side (Affected)</div>
+                <p><strong>${obs.negative_side?.description || 'N/A'}</strong></p>
+                <p style="font-size:0.9rem;color:var(--text-dim);margin-top:4px;">${obs.negative_side?.details || ''}</p>
+            </div>
+            <div class="obs-section obs-positive">
+                <div class="obs-label">▲ Positive Side (Source)</div>
+                <p><strong>${obs.positive_side?.description || 'N/A'}</strong></p>
+                <p style="font-size:0.9rem;color:var(--text-dim);margin-top:4px;">${obs.positive_side?.details || ''}</p>
+            </div>
+            ${obs.thermal_findings?.hotspot_temp ? `
+            <div class="obs-section obs-thermal">
+                <div class="obs-label">🌡️ Thermal Findings</div>
+                <p>Hotspot: ${obs.thermal_findings.hotspot_temp} | Coldspot: ${obs.thermal_findings.coldspot_temp} | ΔT: ${obs.thermal_findings.temperature_differential}</p>
+                <p style="font-size:0.85rem;color:var(--text-dim);">${obs.thermal_findings.interpretation || ''}</p>
+            </div>` : ''}
+        </div>
+    `).join('');
+
+    // Root Causes
+    document.getElementById('causesList').innerHTML = (data.root_causes || []).map((c, i) => `
+        <div class="observation-card">
+            <h4>Cause ${i+1}: ${c.cause}</h4>
+            <p style="margin-bottom:0.5rem;">${c.explanation}</p>
+            <p style="font-size:0.85rem;color:var(--accent);">Affected: ${(c.affected_areas || []).join(', ')}</p>
+        </div>
+    `).join('');
+
+    // Severity
+    document.getElementById('severityList').innerHTML = (data.severity || []).map(s => {
+        const sev = (s.severity || '').toLowerCase();
+        const cls = sev === 'critical' ? 'critical' : sev === 'high' ? 'high' : sev === 'moderate' ? 'moderate' : 'low';
+        return `
+        <div class="observation-card">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+                <h4 style="flex:1;">${s.area}</h4>
+                <span class="badge badge-${cls}">${s.severity}</span>
+            </div>
+            <p style="font-size:0.9rem;margin-top:0.5rem;">${s.reasoning}</p>
+            <p style="font-size:0.85rem;color:var(--accent);margin-top:0.3rem;">Urgency: ${s.urgency}</p>
+        </div>`;
+    }).join('');
+
+    // Actions
+    document.getElementById('actionsList').innerHTML = (data.actions || []).map(a => `
+        <div class="action-item">
+            <div class="action-priority">${a.priority}</div>
+            <div>
+                <div style="font-weight:600;margin-bottom:4px;">${a.action}</div>
+                <div style="font-size:0.9rem;color:var(--text-dim);">${a.description}</div>
+                <div style="font-size:0.8rem;color:var(--accent);margin-top:4px;">⏱ ${a.estimated_urgency} | Areas: ${(a.applicable_areas || []).join(', ')}</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Thermal
+    document.getElementById('thermalList').innerHTML = (data.thermal_summary || []).slice(0, 15).map(t => `
+        <div class="observation-card">
+            <h4>Thermal Page ${t.thermal_page} — ${t.area_mapped_to || 'N/A'}</h4>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.5rem;margin:0.5rem 0;">
+                <div class="meta-item"><div class="meta-label">Hotspot</div><div class="meta-value" style="color:var(--danger);">${t.hotspot}</div></div>
+                <div class="meta-item"><div class="meta-label">Coldspot</div><div class="meta-value" style="color:var(--info);">${t.coldspot}</div></div>
+                <div class="meta-item"><div class="meta-label">Differential</div><div class="meta-value">${t.differential}</div></div>
+            </div>
+            <p style="font-size:0.9rem;color:var(--text-dim);">${t.finding || ''}</p>
+        </div>
+    `).join('');
+
+    // Summary Table
+    const stData = data.summary_table || [];
+    if (stData.length > 0) {
+        let html = '<table class="summary-table"><thead><tr><th>#</th><th>Impacted Area (-ve)</th><th>#</th><th>Exposed Area (+ve)</th></tr></thead><tbody>';
+        stData.forEach(row => {
+            html += `<tr><td>${row.point_no}</td><td>${row.impacted_area_negative}</td><td>${row.point_no_positive}</td><td>${row.exposed_area_positive}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('summaryTable').innerHTML = html;
+    }
+
+    // Images
+    document.getElementById('inspGallery').innerHTML = (data.inspection_images_b64 || []).map(img =>
+        `<div class="gallery-img"><img src="data:image/${img.ext};base64,${img.b64}" alt="${img.id}" loading="lazy"><div class="img-label">${img.id}</div></div>`
+    ).join('');
+    document.getElementById('thermGallery').innerHTML = (data.thermal_images_b64 || []).map(img =>
+        `<div class="gallery-img"><img src="data:image/${img.ext};base64,${img.b64}" alt="${img.id}" loading="lazy"><div class="img-label">${img.id}</div></div>`
+    ).join('');
+
+    // Notes
+    document.getElementById('notesList').innerHTML = (data.additional_notes || []).map(n => `<p style="margin-bottom:0.5rem;">• ${n}</p>`).join('');
+    document.getElementById('missingList').innerHTML = (data.missing_info || []).map(n => `<p style="margin-bottom:0.5rem;">• ${n}</p>`).join('');
+}
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+}
+
+function resetApp() {
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('inspFile').value = '';
+    document.getElementById('thermFile').value = '';
+    document.getElementById('inspFileName').textContent = '';
+    document.getElementById('thermFileName').textContent = '';
+    document.getElementById('inspZone').classList.remove('has-file');
+    document.getElementById('thermZone').classList.remove('has-file');
+    document.querySelectorAll('.step').forEach(s => { s.classList.remove('active','done'); });
+    document.getElementById('step1').classList.add('active');
+}
+</script>
+
+</body>
+</html>
